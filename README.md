@@ -2,4 +2,5 @@
 calculating nebula spectra
 
 $chmod u+x run
+
 $./run
