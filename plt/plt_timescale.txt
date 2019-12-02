@@ -1,0 +1,13 @@
+se log
+se key left bottom
+plot\
+"../output/ele_dis_1.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_2.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_3.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_4.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_5.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_6.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_7.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_8.dat" usi ($1):(($1)/($6)) w l,\
+"../output/ele_dis_9.dat" usi ($1):(($1)/($6)) w l
+

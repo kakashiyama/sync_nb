@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#gcc "$1".c -o "$1".o -O3
+#./"$1".o
+
+cd dynamics 
+echo ">> calculating dynamics"
+gcc dynamics.c -o dynamics.o -O3
+./dynamics.o
+echo "Done"
+
+cd ../microphysics
+echo ">> calculating microphysics"
+gcc microphysics.c -o microphysics.o -O3
+./microphysics.o
+echo "Done"

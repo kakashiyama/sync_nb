@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo ">> cleaning output folder"
+cd output
+rm *
+echo "Done"
