@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "../hdr/astro_const.h"
 #include "../hdr/ns_pwn_param.h"
@@ -40,7 +41,16 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   int i,j;
 
   int t_step = get_hydro_tstep();
-  double t[t_step],dt[t_step],vej[t_step],rej[t_step],vnb[t_step],rnb[t_step],Bnb[t_step],Lpsr[t_step];
+  //double t[t_step],dt[t_step],vej[t_step],rej[t_step],vnb[t_step],rnb[t_step],Bnb[t_step],Lpsr[t_step];
+  double *t,*dt,*vej,*rej,*vnb,*rnb,*Bnb,*Lpsr;
+  t = (double *)malloc(t_step*sizeof(double));
+  dt = (double *)malloc(t_step*sizeof(double));
+  vej = (double *)malloc(t_step*sizeof(double));
+  rej = (double *)malloc(t_step*sizeof(double));
+  vnb = (double *)malloc(t_step*sizeof(double));
+  rnb = (double *)malloc(t_step*sizeof(double));
+  Bnb = (double *)malloc(t_step*sizeof(double));
+  Lpsr = (double *)malloc(t_step*sizeof(double));
   load_hydro_data(t_step,t,dt,vej,rej,vnb,rnb,Bnb,Lpsr);
 
   double gam[Nbin_e],dN_dgam[Nbin_e],dgam[Nbin_e],dN_dgam_dt[Nbin_e],dgam_dt[Nbin_e],tad[Nbin_e],tsyn[Nbin_e];
