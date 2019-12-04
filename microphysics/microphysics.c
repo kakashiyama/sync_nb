@@ -65,7 +65,8 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
     if ((j % output_int) == 0){
       sprintf(output_file_name,"%s%s%d%s",path,head,(int)((double)j/(double)output_int),dat);
       op = fopen(output_file_name,"w");
-      fprintf(op,"#t = %lf [s], N conservation: %1.3e \n",t[j],Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
+      fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
+      fprintf(op,"#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
 
       for (i=0;i<Nbin_e;i++){
