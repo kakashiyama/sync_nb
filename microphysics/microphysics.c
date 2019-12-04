@@ -81,6 +81,15 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
     cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
     time_evolution(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
   }
+  free(t);
+  free(dt);
+  free(vej);
+  free(rej);
+  free(vnb);
+  free(rnb);
+  free(Bnb);
+  free(Lpsr);
+
 }
 
 int get_hydro_tstep()
