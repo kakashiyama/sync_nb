@@ -41,7 +41,6 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   int i,j;
 
   int t_step = get_hydro_tstep();
-  //double t[t_step],dt[t_step],vej[t_step],rej[t_step],vnb[t_step],rnb[t_step],Bnb[t_step],Lpsr[t_step];
   double *t,*dt,*vej,*rej,*vnb,*rnb,*Bnb,*Lpsr;
   t = (double *)malloc(t_step*sizeof(double));
   dt = (double *)malloc(t_step*sizeof(double));
@@ -73,13 +72,13 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
 		gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
       }
-
+      fclose(op);
     }
-    fclose(op);
 
     injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
     cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
     time_evolution(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
+
   }
   free(t);
   free(dt);
