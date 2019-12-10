@@ -8,14 +8,14 @@
 int main()
 {
   struct _input in = load_inputfile();
-  calc_microphysics(in.epse,in.gam_b,in.gam_max,in.p1,in.p2,in.Nbin_e,in.Nbin_ph,in.output_file_num);
+  calc_microphysics(in.epse,in.gam_b,in.gam_max,in.p1,in.p2,in.Nbin_e,in.gam_ph_min,in.gam_ph_max,in.Nbin_ph,in.output_file_num);
 
   return 0;
 }
 
 struct _input load_inputfile()
 {
-  double dmy[14];
+  double dmy[17];
   FILE *ip;
   ip = fopen("../input.dat","r");
   int i=0;
@@ -31,18 +31,20 @@ struct _input load_inputfile()
   in.p1 = dmy[10];
   in.p2 = dmy[11];
   in.Nbin_e = (int)dmy[12];
-  in.Nbin_ph = (int)dmy[13];
-  in.output_file_num = (int)dmy[14];
+  in.gam_ph_min = dmy[13];
+  in.gam_ph_max = dmy[14];
+  in.Nbin_ph = (int)dmy[15];
+  in.output_file_num = (int)dmy[16];
 
   return in;
 }
 
-void calc_microphysics(double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e, int Nbin_ph, int output_file_num)
+void calc_microphysics(double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e, double gam_ph_min, double gam_ph_max, int Nbin_ph, int output_file_num)
 {
   int i,j;
 
   int t_step = get_hydro_tstep();
-  double *t,*dt,*vej,*rej,*vnb,*rnb,*Bnb,*Lpsr;
+  double *t,*dt,*vej,*rej,*vnb,*rnb,*Bnb,*Lpsr,*dr;
   t = (double *)malloc(t_step*sizeof(double));
   dt = (double *)malloc(t_step*sizeof(double));
   vej = (double *)malloc(t_step*sizeof(double));
@@ -51,35 +53,45 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   rnb = (double *)malloc(t_step*sizeof(double));
   Bnb = (double *)malloc(t_step*sizeof(double));
   Lpsr = (double *)malloc(t_step*sizeof(double));
-  load_hydro_data(t_step,t,dt,vej,rej,vnb,rnb,Bnb,Lpsr);
+  dr = (double *)malloc(t_step*sizeof(double));
+  load_hydro_data(t_step,t,dt,vej,rej,vnb,rnb,Bnb,Lpsr,dr);
 
   double gam[Nbin_e],dN_dgam[Nbin_e],dgam[Nbin_e],dN_dgam_dt[Nbin_e],dgam_dt[Nbin_e],tad[Nbin_e],tsyn[Nbin_e];
   double N_inj_tot=0.;
   initialize_e_dis(gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,tad,tsyn,gam_max,Nbin_e);
 
   double gam_ph[Nbin_ph],P_nu_syn[Nbin_ph],alpha_nu_syn[Nbin_ph];
-  initialize_ph_dis(gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
+  initialize_ph_dis(gam_ph,P_nu_syn,alpha_nu_syn,gam_ph_min,gam_ph_max,Nbin_ph);
 
   FILE *op;
   int output_int = (double)t_step/(double)output_file_num;
-  char output_file_name[256]={"\0"},path[256]="../output/",head[256]="ele_dis_",dat[256]=".dat";
+  char output_file_name_e[256]={"\0"},path[256]="../output/",head_e[256]="ele_dis_",dat[256]=".dat";
+  char output_file_name_ph[256]={"\0"},head_ph[256]="ph_spec_";
 
   for (j=0;j<t_step;j++){
 
     if ((j % output_int) == 0){
-      sprintf(output_file_name,"%s%s%d%s",path,head,(int)((double)j/(double)output_int),dat);
-      op = fopen(output_file_name,"w");
+      calc_syn_spec(Bnb[j],rnb[j],dr[j],gam,dgam,dN_dgam,gam_max,Nbin_e,gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
+
+      sprintf(output_file_name_e,"%s%s%d%s",path,head_e,(int)((double)j/(double)output_int),dat);
+      op = fopen(output_file_name_e,"w");
       fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
       fprintf(op,"#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
-
       for (i=0;i<Nbin_e;i++){
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
 		gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
       }
       fclose(op);
 
-      //calc_syn_spec(B[j],r[j],dr[j],gam,dgam,dN_dgam,gam_max,Nbin_e,gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
+      sprintf(output_file_name_ph,"%s%s%d%s",path,head_ph,(int)((double)j/(double)output_int),dat);
+      op = fopen(output_file_name_ph,"w");
+      fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
+      fprintf(op,"#nu [GHz], Pnu [erg/s/Hz] \n");
+      for (i=0;i<Nbin_ph;i++){
+	fprintf(op,"%le %le \n",gam_ph[i]*MeC2/H/1.0e9,P_nu_syn[i]);
+      }
+      fclose(op);
 
     }
 
@@ -96,7 +108,7 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   free(rnb);
   free(Bnb);
   free(Lpsr);
-
+  free(dr);
 }
 
 int get_hydro_tstep()
@@ -112,7 +124,7 @@ int get_hydro_tstep()
 }
 
 
-void load_hydro_data(int t_step, double *t, double *dt, double *vej, double *rej, double *vnb, double *rnb, double *Bnb, double *Lpsr)
+void load_hydro_data(int t_step, double *t, double *dt, double *vej, double *rej, double *vnb, double *rnb, double *Bnb, double *Lpsr, double *dr)
 {
   FILE *ip;
 
@@ -120,8 +132,8 @@ void load_hydro_data(int t_step, double *t, double *dt, double *vej, double *rej
   ip = fopen("../output/dynamics.dat","r");
   fscanf(ip,"%*[^\n]");
   for (i=0;i<t_step;i++){
-    fscanf(ip,"%*d %*le %le %le %le %le %le %le %le %le\n",
-	   &t[i],&dt[i],&vej[i],&rej[i],&vnb[i],&rnb[i],&Bnb[i],&Lpsr[i]);
+    fscanf(ip,"%*d %*le %le %le %le %le %le %le %le %le %le\n",
+	   &t[i],&dt[i],&vej[i],&rej[i],&vnb[i],&rnb[i],&Bnb[i],&Lpsr[i],&dr[i]);
   }
   fclose(ip);
 }
@@ -151,11 +163,12 @@ void initialize_e_dis(double *gam, double *dgam, double *dN_dgam, double *dN_dga
   }
 }
 
-void initialize_ph_dis(double *gam_ph, double *P_nu_syn, double *alpha_nu_syn, int Nbin_ph)
+void initialize_ph_dis(double *gam_ph, double *P_nu_syn, double *alpha_nu_syn, double gam_ph_min, double gam_ph_max, int Nbin_ph)
 {
   int i;
+  double del_ln_gam_ph = (log(gam_ph_max)-log(gam_ph_min))/(double)(Nbin_ph-1);
   for (i=0;i<Nbin_ph;i++){
-    gam_ph[i] = 0.;
+    gam_ph[i] = gam_ph_min*exp(del_ln_gam_ph*(double)i);
     P_nu_syn[i] = 0.;
     alpha_nu_syn[i] = 0.;
   }

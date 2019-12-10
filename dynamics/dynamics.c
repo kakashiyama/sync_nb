@@ -45,7 +45,7 @@ void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax
   sd(Bp,Prot0,Mej,&tsd,&Lsd,&Erot,&vsd,&rsd);
 
   op1 = fopen("../output/dynamics.dat","w");
-  fprintf(op1,"#1. No. 2. t/tsd  3. t[s] 4. dt[s] 5. vej[cm/s] 6. rej[cm] 7. vnb[cm/s] 8. rnb[cm] 9. Bnb[G] 10. Lpsr[erg/s]\n");
+  fprintf(op1,"#1. No. 2. t/tsd  3. t[s] 4. dt[s] 5. vej[cm/s] 6. rej[cm] 7. vnb[cm/s] 8. rnb[cm] 9. Bnb[G] 10. Lpsr[erg/s] 11. dr[cm] \n");
   int cnt=0;
   double t,dt,rej_tmp,vej_tmp,rnb_tmp,vnb_tmp,Bnb_tmp,Lpsr_tmp;
   t = tmin;
@@ -57,8 +57,8 @@ void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax
     rnb_tmp = rnb(t,tsd,rsd);
     Bnb_tmp = Bnb(t,tsd,Erot,rsd,epsB);
     Lpsr_tmp = Lpsr(t,tsd,Lsd);
-    fprintf(op1,"%d %le %le %le %le %le %le %le %le %le \n",
-	    cnt,t/tsd,t,dt,vej_tmp,rej_tmp,vnb_tmp,rnb_tmp,Bnb_tmp,Lpsr_tmp);
+    fprintf(op1,"%d %le %le %le %le %le %le %le %le %le %le\n",
+	    cnt,t/tsd,t,dt,vej_tmp,rej_tmp,vnb_tmp,rnb_tmp,Bnb_tmp,Lpsr_tmp,dt*vnb_tmp);
     cnt++;
     dt = fac_dt*rej_tmp/vej_tmp;
     t += dt;
