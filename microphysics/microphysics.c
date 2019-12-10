@@ -8,7 +8,7 @@
 int main()
 {
   struct _input in = load_inputfile();
-  calc_microphysics(in.epse,in.gam_b,in.gam_max,in.p1,in.p2,in.Nbin_e,in.output_file_num);
+  calc_microphysics(in.epse,in.gam_b,in.gam_max,in.p1,in.p2,in.Nbin_e,in.Nbin_ph,in.output_file_num);
 
   return 0;
 }
@@ -31,12 +31,13 @@ struct _input load_inputfile()
   in.p1 = dmy[10];
   in.p2 = dmy[11];
   in.Nbin_e = (int)dmy[12];
-  in.output_file_num = (int)dmy[13];
+  in.Nbin_ph = (int)dmy[13];
+  in.output_file_num = (int)dmy[14];
 
   return in;
 }
 
-void calc_microphysics(double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e, int output_file_num)
+void calc_microphysics(double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e, int Nbin_ph, int output_file_num)
 {
   int i,j;
 
@@ -56,6 +57,9 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   double N_inj_tot=0.;
   initialize_e_dis(gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,tad,tsyn,gam_max,Nbin_e);
 
+  double gam_ph[Nbin_ph],P_nu_syn[Nbin_ph],alpha_nu_syn[Nbin_ph];
+  initialize_ph_dis(gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
+
   FILE *op;
   int output_int = (double)t_step/(double)output_file_num;
   char output_file_name[256]={"\0"},path[256]="../output/",head[256]="ele_dis_",dat[256]=".dat";
@@ -74,11 +78,14 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
 		gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
       }
       fclose(op);
+
+      //calc_syn_spec(B[j],r[j],dr[j],gam,dgam,dN_dgam,gam_max,Nbin_e,gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
+
     }
 
     injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
     cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
-    time_evolution(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
+    time_evolution_e(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
 
   }
   free(t);
@@ -129,7 +136,6 @@ double Ntot(double *dgam, double *dN_dgam, int Nbin_e)
   return tmp;
 }
 
-
 void initialize_e_dis(double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, double *tad, double *tsyn, double gam_max, int Nbin_e)
 {
   double dln_gam = log(gam_max)/(double)(Nbin_e-1);
@@ -142,6 +148,16 @@ void initialize_e_dis(double *gam, double *dgam, double *dN_dgam, double *dN_dga
     dgam_dt[i] = 0.;
     tad[i] = 0.;
     tsyn[i] = 0.;
+  }
+}
+
+void initialize_ph_dis(double *gam_ph, double *P_nu_syn, double *alpha_nu_syn, int Nbin_ph)
+{
+  int i;
+  for (i=0;i<Nbin_ph;i++){
+    gam_ph[i] = 0.;
+    P_nu_syn[i] = 0.;
+    alpha_nu_syn[i] = 0.;
   }
 }
 
@@ -191,7 +207,7 @@ void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, doub
   }
 }
 
-void time_evolution(double dt, double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, int Nbin_e)
+void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, int Nbin_e)
 {
   int i;
     
@@ -200,4 +216,62 @@ void time_evolution(double dt, double *gam, double *dgam, double *dN_dgam, doubl
     dN_dgam[i] = (dN_dgam[i]+dN_dgam_dt[i]*dt+dN_dgam[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i]);
   }
   dN_dgam[0] = dN_dgam[0]+dN_dgam_dt[0]*dt+(dN_dgam[1]*dt/dgam[1]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0]);    
+}
+
+double syn_func_fit(double x)
+{
+  /* analytical fitting of synchrotron function F(x) */
+  /* see http://arxiv.org/pdf/1301.6908.pdf */
+    
+  double F1 = M_PI*pow(2.0,5.0/3.0)/sqrt(3.0)/GAMMA13*pow(x,1.0/3.0);
+  double F2 = sqrt(M_PI/2.0)*exp(-x)*pow(x,1.0/2.0);
+    
+  double a1_1 = -0.97947838884478688;
+  double a1_2 = -0.83333239129525072;
+  double a1_3 = 0.1554179602681624;
+  double H_1 = a1_1*pow(x,1.0)+a1_2*pow(x,1.0/2.0)+a1_3*pow(x,1.0/3.0);
+  double delta_1 = exp(H_1);
+    
+  double a2_1 = -0.0469247165562628882;
+  double a2_2 = -0.70055018056462881;
+  double a2_3 = 0.0103876297841949544;
+  double H_2 = a2_1*pow(x,1.0)+a2_2*pow(x,1.0/2.0)+a2_3*pow(x,1.0/3.0);
+  double delta_2 = 1.0-exp(H_2);
+    
+  return F1*delta_1+F2*delta_2;
+}
+
+void calc_syn_spec(double B, double r, double dr, double *gam, double *dgam, double *dN_dgam, double gam_max, int Nbin_e, double *gam_ph, double *P_nu_syn, double *alpha_nu_syn, int Nbin_ph)
+{
+  int i,j,k;
+  double nu,x,sin_alpha=2./3.,tau_sa;
+  double integ=0.,integ_alpha=0.,del_ln_gam=log(gam_max)/(double)(Nbin_e-1);
+  double vol = 4.*M_PI*r*r*dr;
+
+  for (k=0;k<Nbin_ph;k++) {
+    integ = 0.0;
+    integ_alpha = 0.0;
+    nu = gam_ph[k]*MeC2/H;
+    for (i=0;i<Nbin_e;i++) {
+      x= (2.0*M_PI*nu)/(3.0*ELEC*gam[i]*gam[i]*B/2.0/M_ELE/C*sin_alpha); /* Eq. (6.17c) of Rybicki & Lightman */
+      if (i==0 || i==Nbin_e-1) {
+	integ += 0.5*dN_dgam[i]*gam[i]*del_ln_gam*syn_func_fit(x);
+	integ_alpha += -0.5*sin_alpha*pow(gam[i],2.0)*(-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+      } else {
+	integ += dN_dgam[i]*gam[i]*del_ln_gam*syn_func_fit(x);
+	integ_alpha += -sin_alpha*pow(gam[i],2.0)*(dN_dgam[i+1]/pow(gam[i+1],2.0)-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+      }
+    }
+        
+    P_nu_syn[k] = sqrt(3.0)*pow(ELEC,3.0)*B*sin_alpha/MeC2*integ; /* Eq. (6.33) x (2 pi) of Rybicki & Lightman */
+    alpha_nu_syn[k] = C*C/8.0/M_PI/nu/nu*sqrt(3.0)*pow(ELEC,3.0)*B*integ_alpha/vol; /* Eq. (6.52) of Rybicki & Lightman */
+    tau_sa = alpha_nu_syn[k]*dr;
+        
+    if (tau_sa > 1.0e-6){
+      P_nu_syn[k] = (1.0-exp(-tau_sa))*P_nu_syn[k]/tau_sa;
+    }
+        
+    integ = 0.0;
+    integ_alpha = 0.0;
+  }
 }

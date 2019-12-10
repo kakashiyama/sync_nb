@@ -11,4 +11,5 @@ gam_max 1.0e9
 p1 1.5
 p2 2.5
 Nbin_e 2048.
+Nbin_ph 2048.
 output_file_num 10.
