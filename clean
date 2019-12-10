@@ -3,4 +3,8 @@
 echo ">> cleaning output folder"
 cd output
 rm *
+cd ../dynamics
+rm *.o
+cd ../microphysics
+rm *.o
 echo "Done"

@@ -16,7 +16,7 @@ int main()
 
 struct _input load_inputfile()
 {
-  double dmy[14];
+  double dmy[17];
   FILE *ip;
   ip = fopen("../input.dat","r");
   int i=0;
