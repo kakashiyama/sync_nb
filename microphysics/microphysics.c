@@ -207,7 +207,7 @@ double dgam_dt_syn(double gam, double B)
   // double sin2phi = 2.0/3.0; /* averaging pitch angle */
   // double beta_par = 1.0; /* assuming that particles are relativistic */
     
-  return 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gam*gam;
+  return 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gam*gam/MeC2;
 }
 
 void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, double *tsyn, int Nbin_e)
@@ -269,10 +269,10 @@ void calc_syn_spec(double B, double r, double dr, double *gam, double *dgam, dou
       x= (2.0*M_PI*nu)/(3.0*ELEC*gam[i]*gam[i]*B/2.0/M_ELE/C*sin_alpha); /* Eq. (6.17c) of Rybicki & Lightman */
       if (i==0 || i==Nbin_e-1) {
 	integ += 0.5*dN_dgam[i]*dgam[i]*syn_func_fit(x);
-	integ_alpha += -0.5*sin_alpha*pow(gam[i],2.0)*(-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+	integ_alpha += -0.5*sin_alpha*pow(gam[i],2.0)*(-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*dgam[i]/MeC2;
       } else {
 	integ += dN_dgam[i]*dgam[i]*syn_func_fit(x);
-	integ_alpha += -sin_alpha*pow(gam[i],2.0)*(dN_dgam[i+1]/pow(gam[i+1],2.0)-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+	integ_alpha += -sin_alpha*pow(gam[i],2.0)*(dN_dgam[i+1]/pow(gam[i+1],2.0)-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*dgam[i]/MeC2;
       }
     }
         
