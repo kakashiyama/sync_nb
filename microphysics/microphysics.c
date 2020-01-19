@@ -89,7 +89,7 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
       fprintf(op,"#nu [GHz], Pnu [erg/s/Hz] \n");
       for (i=0;i<Nbin_ph;i++){
-	fprintf(op,"%le %le \n",gam_ph[i]*MeC2/H/1.0e9,P_nu_syn[i]);
+	fprintf(op,"%le %le \n",gam_ph[i]*MeC2/H/1.0e9,gam_ph[i]*MeC2/H*P_nu_syn[i]);
       }
       fclose(op);
 
@@ -207,7 +207,7 @@ double dgam_dt_syn(double gam, double B)
   // double sin2phi = 2.0/3.0; /* averaging pitch angle */
   // double beta_par = 1.0; /* assuming that particles are relativistic */
     
-  return 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gam*gam;
+  return 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gam*gam/MeC2;
 }
 
 void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, double *tsyn, int Nbin_e)
@@ -264,7 +264,7 @@ void calc_syn_spec(double B, double r, double dr, double *gam, double *dgam, dou
 {
   int i,j,k;
   double nu,x,sin_alpha=2./3.,tau_sa;
-  double integ=0.,integ_alpha=0.,del_ln_gam=log(gam_max)/(double)(Nbin_e-1);
+  double integ=0.,integ_alpha=0.;
   double vol = 4.*M_PI*r*r*dr;
 
   for (k=0;k<Nbin_ph;k++) {
@@ -274,11 +274,11 @@ void calc_syn_spec(double B, double r, double dr, double *gam, double *dgam, dou
     for (i=0;i<Nbin_e;i++) {
       x= (2.0*M_PI*nu)/(3.0*ELEC*gam[i]*gam[i]*B/2.0/M_ELE/C*sin_alpha); /* Eq. (6.17c) of Rybicki & Lightman */
       if (i==0 || i==Nbin_e-1) {
-	integ += 0.5*dN_dgam[i]*gam[i]*del_ln_gam*syn_func_fit(x);
-	integ_alpha += -0.5*sin_alpha*pow(gam[i],2.0)*(-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+	integ += 0.5*dN_dgam[i]*dgam[i]*syn_func_fit(x);
+	integ_alpha += -0.5*sin_alpha*pow(gam[i],2.0)*(-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*dgam[i]/MeC2;
       } else {
-	integ += dN_dgam[i]*gam[i]*del_ln_gam*syn_func_fit(x);
-	integ_alpha += -sin_alpha*pow(gam[i],2.0)*(dN_dgam[i+1]/pow(gam[i+1],2.0)-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*gam[i]*del_ln_gam/MeC2;
+	integ += dN_dgam[i]*dgam[i]*syn_func_fit(x);
+	integ_alpha += -sin_alpha*pow(gam[i],2.0)*(dN_dgam[i+1]/pow(gam[i+1],2.0)-dN_dgam[i]/pow(gam[i],2.0))/dgam[i]*syn_func_fit(x)*dgam[i]/MeC2;
       }
     }
         
