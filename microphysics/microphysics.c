@@ -231,10 +231,10 @@ void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, dou
    
   dN_dgam[Nbin_e-1] = (dN_dgam_old[Nbin_e-1]+dN_dgam_dt[Nbin_e-1]*dt)/(1.0+dt/gam[Nbin_e-1]*dgam_dt[Nbin_e-1]);
   for(i=Nbin_e-2;i>0;i--){
-    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam_old[i+1]*dt/gam[i]*dgam_dt[i+1])/(1.0+dt/gam[i]*dgam_dt[i]);
+    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam[i+1]*dt/gam[i]*dgam_dt[i+1])/(1.0+dt/gam[i]*dgam_dt[i]);
   }
-  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam_old[1]*dt/gam[1]*dgam_dt[1])/(1.0+dt/gam[0]*dgam_dt[0]);    
-
+  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam[1]*dt/gam[1]*dgam_dt[1])/(1.0+dt/gam[0]*dgam_dt[0]);    
+  
 }
 
 double syn_func_fit(double x)
