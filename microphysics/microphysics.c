@@ -80,7 +80,8 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
       for (i=0;i<Nbin_e;i++){
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
-		gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
+		//gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
+		gam[i],dgam[i],dN_dgam[i],gam[i]*gam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
       }
       fclose(op);
 
@@ -176,7 +177,7 @@ void initialize_ph_dis(double *gam_ph, double *P_nu_syn, double *alpha_nu_syn, d
 
 double dN_dgam_dt_inj(double gam, double Lpsr, double epse, double gam_b, double gam_max, double p1, double p2)
 {
-  double fac_bol = 1./(2.-p1)*(1.-pow(gam_b,-2.+p1)) + 1./(2.-p2)*(pow(gam_max,2.-p2)-1.);
+  double fac_bol = 1./(2.-p1)*(1.-pow(gam_b,-2.+p1)) + 1./(2.-p2)*(pow(gam_max/gam_b,2.-p2)-1.);
 
   if (gam < gam_b){
     return epse*Lpsr/(MeC2*gam_b*gam_b)/fac_bol*pow(gam/gam_b,-p1);
