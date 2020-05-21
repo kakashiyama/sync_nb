@@ -3,9 +3,9 @@ cd dynamics
 echo ">> calculating dynamics"
 gcc dynamics.c -o dynamics.o -O3
 ./dynamics.o
-echo "Done"
+echo ">> Done"
 cd ../microphysics
 echo ">> calculating microphysics"
 gcc microphysics.c -o microphysics.o -O3
 ./microphysics.o
-echo "Done"
+echo ">> Done"

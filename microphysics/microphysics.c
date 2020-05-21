@@ -76,7 +76,9 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       sprintf(output_file_name_e,"%s%s%d%s",path,head_e,(int)((double)j/(double)output_int),dat);
       op = fopen(output_file_name_e,"w");
       fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
+      printf("#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
       fprintf(op,"#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
+      printf("#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
       for (i=0;i<Nbin_e;i++){
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
@@ -232,10 +234,11 @@ void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, dou
    
   dN_dgam[Nbin_e-1] = (dN_dgam_old[Nbin_e-1]+dN_dgam_dt[Nbin_e-1]*dt)/(1.0+dt/dgam[Nbin_e-1]*dgam_dt[Nbin_e-1]);
   for(i=Nbin_e-2;i>0;i--){
-    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i]);
+    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam_old[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i]);
   }
-  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam[1]*dt/dgam[1]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0]);    
+  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam_old[1]*dt/dgam[1]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0]);
   
+
 }
 
 double syn_func_fit(double x)
