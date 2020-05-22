@@ -68,6 +68,8 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   char output_file_name_e[256]={"\0"},path[256]="../output/",head_e[256]="ele_dis_",dat[256]=".dat";
   char output_file_name_ph[256]={"\0"},head_ph[256]="ph_spec_";
 
+
+  /* Need to fix the output timing problem */
   for (j=0;j<t_step;j++){
 
     if ((j % output_int) == 0){
@@ -76,13 +78,10 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       sprintf(output_file_name_e,"%s%s%d%s",path,head_e,(int)((double)j/(double)output_int),dat);
       op = fopen(output_file_name_e,"w");
       fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
-      printf("#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
       fprintf(op,"#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
-      printf("#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
       for (i=0;i<Nbin_e;i++){
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
-		//gam[i],dgam[i],dN_dgam[i],gam[i]*dgam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
 		gam[i],dgam[i],dN_dgam[i],gam[i]*gam[i]*dN_dgam[i]*MeC2,dN_dgam_dt[i],dgam_dt[i],tad[i],tsyn[i]);
       }
       fclose(op);
@@ -96,6 +95,8 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       }
       fclose(op);
 
+      printf("t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
+      printf("Ntot = %12.3e, Ntot_inj = %12.3e, Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e),N_inj_tot,Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
     }
 
     injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
