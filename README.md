@@ -1,12 +1,12 @@
 # sync_nb
-calculating nebula spectra
+## calculating nebula spectra
 
 `$ chmod u+x run`
 
 `$ ./run`
 
 
-plotting the electron and photon spectra
+## plotting the electron and photon spectra
 
 `$ gnuplot plt/plt_e_dis.txt`
 
