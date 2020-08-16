@@ -8,7 +8,7 @@
 int main()
 {
   struct _input in = load_inputfile();
-  calc_dynamics(in.Bp,in.Prot0,in.Mej,in.tmin,in.tmax,in.fac_dt,in.epsB,in.gamb);
+  calc_dynamics(in.Bp,in.Prot0,in.Mej,in.tmin,in.tmax,in.fac_dt,in.epsB);
 
   return 0;
 
@@ -33,12 +33,11 @@ struct _input load_inputfile()
   in.tmax = dmy[4];
   in.fac_dt = dmy[5];
   in.epsB = dmy[6];
-  in.gamb = dmy[8];
 
   return in;
 }
 
-void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax, double fac_dt, double epsB, double gamb)
+void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax, double fac_dt, double epsB)
 {
   FILE *op1,*op2;
 
@@ -49,8 +48,8 @@ void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax
   fprintf(op1,"#1. No. 2. t/tsd  3. t[s] 4. dt[s] 5. vej[cm/s] 6. rej[cm] 7. vnb[cm/s] 8. rnb[cm] 9. Bnb[G] 10. Lpsr[erg/s] 11. dr[cm] \n");
   int cnt=0;
   double t,dt,dt_dyn,dt_syn,rej_tmp,vej_tmp,rnb_tmp,vnb_tmp,Bnb_tmp,Lpsr_tmp;
-  t = tmin;
-  dt = tmin;
+  
+  t = tmin;  
   while(t < tmax){
     vej_tmp = vej(t,tsd,vsd);
     rej_tmp = rej(t,tsd,rsd);
@@ -58,22 +57,14 @@ void calc_dynamics(double Bp, double Prot0, double Mej, double tmin, double tmax
     rnb_tmp = rnb(t,tsd,rsd);
     Bnb_tmp = Bnb(t,tsd,Erot,rsd,epsB);
     Lpsr_tmp = Lpsr(t,tsd,Lsd);
+
+    dt = fac_dt*rej_tmp/vej_tmp;
+
     fprintf(op1,"%d %le %le %le %le %le %le %le %le %le %le\n",
 	    cnt,t/tsd,t,dt,vej_tmp,rej_tmp,vnb_tmp,rnb_tmp,Bnb_tmp,Lpsr_tmp,dt*vnb_tmp);
-    cnt++;
 
-    /* Need to fix the time step issue */
-    /* Probably I should not split the dynamics and microphysics in order to reduce the memory usage */
-    dt_dyn = fac_dt*rej_tmp/vej_tmp;
-    dt_syn = tsynb(Bnb_tmp,gamb);
-    if (dt_syn <= dt_dyn){
-      dt = dt_syn;
-    } else {
-      dt = dt_dyn;
-    }
     t += dt;
-    printf("dt= %12.3e [s]\n",dt_dyn);
-
+    cnt++;
   }
   fclose(op1);
 
@@ -184,8 +175,3 @@ double Bnb(double t, double tsd, double Erot, double rsd, double epsB)
   return sqrt(6.*epsB*E/pow(R,3.));
 }
 
-double tsynb(double B, double gamb)
-{
-  double dgam_dt = 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gamb*gamb/MeC2;
-  return gamb/dgam_dt;
-}

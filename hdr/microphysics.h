@@ -30,6 +30,7 @@ double dNe_dEe_dt_inj(double gam, double Lpsr, double epse, double gam_b, double
 void injection(double *gam, double *dgam, double *dN_dgam_dt, double Lpsr, double dt, double *N_inj_tot, double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e);
 double dgam_dt_ad(double gam, double t);
 double dgam_dt_syn(double gam, double B);
+double tsynb(double B, double gamb);
 void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, double *tsyn, int Nbin_e);
 void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, int Nbin_e);
 double syn_func_fit(double x);

@@ -2,13 +2,13 @@ se log
 se key left bottom
 se yrange [1.0e20:*]
 plot\
-"../output/ph_spec_1.dat" w l,\
-"../output/ph_spec_2.dat" w l,\
-"../output/ph_spec_3.dat" w l,\
-"../output/ph_spec_4.dat" w l,\
-"../output/ph_spec_5.dat" w l,\
-"../output/ph_spec_6.dat" w l,\
-"../output/ph_spec_7.dat" w l,\
-"../output/ph_spec_8.dat" w l,\
-"../output/ph_spec_9.dat" w l
+"./output/ph_spec_1.dat" w l,\
+"./output/ph_spec_2.dat" w l,\
+"./output/ph_spec_3.dat" w l,\
+"./output/ph_spec_4.dat" w l,\
+"./output/ph_spec_5.dat" w l,\
+"./output/ph_spec_6.dat" w l,\
+"./output/ph_spec_7.dat" w l,\
+"./output/ph_spec_8.dat" w l,\
+"./output/ph_spec_9.dat" w l
 

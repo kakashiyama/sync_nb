@@ -41,10 +41,11 @@ struct _input load_inputfile()
 
 void calc_microphysics(double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e, double gam_ph_min, double gam_ph_max, int Nbin_ph, int output_file_num)
 {
-  int i,j;
+  int i,j,k,kmax;
 
   int t_step = get_hydro_tstep();
   double *t,*dt,*vej,*rej,*vnb,*rnb,*Bnb,*Lpsr,*dr;
+  double dt_tmp;
   t = (double *)malloc(t_step*sizeof(double));
   dt = (double *)malloc(t_step*sizeof(double));
   vej = (double *)malloc(t_step*sizeof(double));
@@ -68,17 +69,18 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
   char output_file_name_e[256]={"\0"},path[256]="../output/",head_e[256]="ele_dis_",dat[256]=".dat";
   char output_file_name_ph[256]={"\0"},head_ph[256]="ph_spec_";
 
+  double number_conservation = 0.0;
 
-  /* Need to fix the output timing problem */
   for (j=0;j<t_step;j++){
 
     if ((j % output_int) == 0){
+
       calc_syn_spec(Bnb[j],rnb[j],dr[j],gam,dgam,dN_dgam,gam_max,Nbin_e,gam_ph,P_nu_syn,alpha_nu_syn,Nbin_ph);
 
       sprintf(output_file_name_e,"%s%s%d%s",path,head_e,(int)((double)j/(double)output_int),dat);
       op = fopen(output_file_name_e,"w");
       fprintf(op,"#t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
-      fprintf(op,"#Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
+      fprintf(op,"#Number conservation: %1.3e\n",number_conservation);
       fprintf(op,"#gam, dgam, dN/dgam, Ee*dN, dN/dgam/dt, dgam/dt, tad[s], tsyn[s] \n");
       for (i=0;i<Nbin_e;i++){
 	fprintf(op,"%le %le %le %le %le %le %le %le \n",
@@ -95,13 +97,32 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
       }
       fclose(op);
 
-      printf("t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
-      printf("Ntot = %12.3e, Ntot_inj = %12.3e, Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e),N_inj_tot,Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot);
+      if (j != 0){
+	printf("t = %12.3e [s], r_nb = %12.3e [cm], B_nb = %12.3e [G], L_sd = %12.3e [erg/s]\n",t[j],rnb[j],Bnb[j],Lpsr[j]);
+	printf("Ne_tot = %12.3e, Ne_injected = %12.3e, Number conservation: %1.3e\n",Ntot(dgam,dN_dgam,Nbin_e),N_inj_tot,number_conservation);
+      }
+
     }
 
-    injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
-    cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
-    time_evolution_e(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
+    /* To-Do */
+    /* To comibine dynamics.c and microphsyics.c instead of using the "if" sentence below */
+    
+    dt_tmp = 0.5*tsynb(Bnb[j],gam_b);
+    if (dt_tmp <= dt[j] && j != 0){
+      kmax = (int)(dt[j]/dt_tmp);
+      dt_tmp = dt[j]/(double)kmax;
+      for(k=0;k<kmax;k++){
+	injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt_tmp,&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
+	cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
+	time_evolution_e(dt_tmp,gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
+      }
+    } else {
+      injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
+      cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
+      time_evolution_e(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
+    }
+
+    number_conservation = Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot;
 
   }
   free(t);
@@ -146,9 +167,10 @@ double Ntot(double *dgam, double *dN_dgam, int Nbin_e)
 {
   int i;
   double tmp=0.;
-  for (i=0;i<Nbin_e;i++){
+  for (i=1;i<Nbin_e-1;i++){
     tmp += dN_dgam[i]*dgam[i];
   }
+  tmp += 0.5*(dN_dgam[0]*dgam[0]+dN_dgam[Nbin_e-1]*dgam[Nbin_e-1]);
   return tmp;
 }
 
@@ -197,6 +219,7 @@ void injection(double *gam, double *dgam, double *dN_dgam_dt, double Lpsr, doubl
     dN_dgam_dt[i] = dN_dgam_dt_inj(gam[i],Lpsr,epse,gam_b,gam_max,p1,p2);
     tmp += dN_dgam_dt[i]*dt*dgam[i];
   }
+  tmp -= 0.5*(dN_dgam_dt[0]*dt*dgam[0]+dN_dgam_dt[Nbin_e-1]*dt*dgam[Nbin_e-1]);
   *N_inj_tot += tmp;
 }
 
@@ -210,8 +233,14 @@ double dgam_dt_syn(double gam, double B)
   // electron synchrotron energy loss rate (see e.g., Eq. 7.13 of Dermer & Menon)
   // double sin2phi = 2.0/3.0; /* averaging pitch angle */
   // double beta_par = 1.0; /* assuming that particles are relativistic */
-    
+  
   return 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gam*gam/MeC2;
+}
+
+double tsynb(double B, double gamb)
+{
+  double dgam_dt = 4.0/3.0*C*SIGMA_T*(B*B/8.0/M_PI)*gamb*gamb/MeC2;
+  return gamb/dgam_dt;
 }
 
 void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, double *tsyn, int Nbin_e)
@@ -220,7 +249,7 @@ void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, doub
   for (i=0;i<Nbin_e;i++) {
     dgam_dt[i] = dgam_dt_ad(gam[i],t)+dgam_dt_syn(gam[i],B);
     tad[i] = gam[i]/dgam_dt_ad(gam[i],t);
-    tsyn[i] = gam[i]/dgam_dt_syn(gam[i],B); 
+    tsyn[i]= gam[i]/dgam_dt_syn(gam[i],B); 
   }
 }
 
@@ -232,15 +261,19 @@ void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, dou
   for (i=0;i<Nbin_e;i++){
     dN_dgam_old[i] = dN_dgam[i];
   }
-   
+
   dN_dgam[Nbin_e-1] = (dN_dgam_old[Nbin_e-1]+dN_dgam_dt[Nbin_e-1]*dt)/(1.0+dt/dgam[Nbin_e-1]*dgam_dt[Nbin_e-1]);
   for(i=Nbin_e-2;i>0;i--){
-    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam_old[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i]);
-  }
-  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam_old[1]*dt/dgam[1]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0]);
-  
+    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam_old[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i])
+      + dN_dgam_dt[i+1]*dgam_dt[i+1]*dt*dt/gam[i+1]/(1.0+dt/dgam[i+1]*dgam_dt[i+1]);
+  }  
+  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam_old[1]*dt/dgam[0]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0])
+    + dN_dgam_dt[1]*dgam_dt[1]*dt*dt/gam[1]/(1.0+dt/dgam[1]*dgam_dt[1]);
 
+  /* To-Do?  */
+  /* the 2nd term in the dN_dgam[i] calculation corresponds to the fast cooling electron flux, which may need to be refined */
 }
+
 
 double syn_func_fit(double x)
 {
@@ -259,6 +292,7 @@ double syn_func_fit(double x)
   double a2_1 = -0.0469247165562628882;
   double a2_2 = -0.70055018056462881;
   double a2_3 = 0.0103876297841949544;
+
   double H_2 = a2_1*pow(x,1.0)+a2_2*pow(x,1.0/2.0)+a2_3*pow(x,1.0/3.0);
   double delta_2 = 1.0-exp(H_2);
     

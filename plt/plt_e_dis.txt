@@ -1,15 +1,15 @@
 se log
 se key left bottom
-#se yrange [1.0e45:1.0e50]
+se yrange [1.0e40:1.0e50]
 #se xrange [1:100000]
 plot\
-"../output/ele_dis_1.dat" usi 1:4 w l,\
-"../output/ele_dis_2.dat" usi 1:4 w l,\
-"../output/ele_dis_3.dat" usi 1:4 w l,\
-"../output/ele_dis_4.dat" usi 1:4 w l,\
-"../output/ele_dis_5.dat" usi 1:4 w l,\
-"../output/ele_dis_6.dat" usi 1:4 w l,\
-"../output/ele_dis_7.dat" usi 1:4 w l,\
-"../output/ele_dis_8.dat" usi 1:4 w l,\
-"../output/ele_dis_9.dat" usi 1:4 w l
+"./output/ele_dis_1.dat" usi 1:4 w l,\
+"./output/ele_dis_2.dat" usi 1:4 w l,\
+"./output/ele_dis_3.dat" usi 1:4 w l,\
+"./output/ele_dis_4.dat" usi 1:4 w l,\
+"./output/ele_dis_5.dat" usi 1:4 w l,\
+"./output/ele_dis_6.dat" usi 1:4 w l,\
+"./output/ele_dis_7.dat" usi 1:4 w l,\
+"./output/ele_dis_8.dat" usi 1:4 w l,\
+"./output/ele_dis_9.dat" usi 1:4 w l
 
