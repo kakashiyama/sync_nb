@@ -2,7 +2,7 @@
   
 Original ver. created by Kazumi Kashiyama on 17/08/20.
 
-An implicit solver for synchrotron nebula emission. The code calculates the time evolution of the electron energy distribution in a pulsar wind nebula (PWN) and the synchrotron specrum for a simplified supernova dynamics. The electron injection spectrum is so far assumed to be a fixed-shape broken power low. Only synchrotron self absorption (SSA) is taken into account as the photon absorption process.
+An implicit solver for synchrotron nebula emission. The code calculates the time evolution of the electron energy distribution in a pulsar wind nebula (PWN) and the synchrotron specrum for a simplified supernova dynamics. The electron injection spectrum is so far assumed to be a fixed-shape broken power law. Only synchrotron self absorption (SSA) is taken into account as the photon absorption process.
 
 
 ---
