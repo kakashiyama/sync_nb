@@ -1,8 +1,8 @@
 Bp[G] 2.e13
 Prot0[s] 1.e-3
 Mej[Msun] 15.
-tmin[s] 1.e6
-tmax[s] 1.e8
+tmin[s] 1.e5
+tmax[s] 1.e9
 fac_dt 1.0e-3
 epsB 1.e-2
 epse 0.99
@@ -10,8 +10,8 @@ gam_b 1.e3
 gam_max 1.0e6
 p1 -5.
 p2 3.
-Nbin_e 1024.
+Nbin_e 512.
 gam_ph_min 1.e-14
 gam_ph_max 1.e+4
-Nbin_ph 1024.
+Nbin_ph 512.
 output_file_num 10.

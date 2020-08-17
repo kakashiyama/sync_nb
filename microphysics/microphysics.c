@@ -104,23 +104,9 @@ void calc_microphysics(double epse, double gam_b, double gam_max, double p1, dou
 
     }
 
-    /* To-Do */
-    /* To comibine dynamics.c and microphsyics.c instead of using the "if" sentence below */
-    
-    dt_tmp = 0.5*tsynb(Bnb[j],gam_b);
-    if (dt_tmp <= dt[j] && j != 0){
-      kmax = (int)(dt[j]/dt_tmp);
-      dt_tmp = dt[j]/(double)kmax;
-      for(k=0;k<kmax;k++){
-	injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt_tmp,&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
-	cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
-	time_evolution_e(dt_tmp,gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
-      }
-    } else {
-      injection(gam,dgam,dN_dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
-      cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
-      time_evolution_e(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
-    }
+    cooling(t[j],Bnb[j],dgam_dt,gam,tad,tsyn,Nbin_e);
+    injection(gam,dgam,dN_dgam_dt,dgam_dt,Lpsr[j],dt[j],&N_inj_tot,epse,gam_b,gam_max,p1,p2,Nbin_e);
+    time_evolution_e(dt[j],gam,dgam,dN_dgam,dN_dgam_dt,dgam_dt,Nbin_e);
 
     number_conservation = Ntot(dgam,dN_dgam,Nbin_e)/N_inj_tot;
 
@@ -167,10 +153,10 @@ double Ntot(double *dgam, double *dN_dgam, int Nbin_e)
 {
   int i;
   double tmp=0.;
-  for (i=1;i<Nbin_e-1;i++){
+  for (i=0;i<Nbin_e-1;i++){
     tmp += dN_dgam[i]*dgam[i];
   }
-  tmp += 0.5*(dN_dgam[0]*dgam[0]+dN_dgam[Nbin_e-1]*dgam[Nbin_e-1]);
+  tmp += 0.5*dN_dgam[Nbin_e-1]*dgam[Nbin_e-1];
   return tmp;
 }
 
@@ -211,16 +197,42 @@ double dN_dgam_dt_inj(double gam, double Lpsr, double epse, double gam_b, double
   }
 }
 
-void injection(double *gam, double *dgam, double *dN_dgam_dt, double Lpsr, double dt, double *N_inj_tot, double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e)
+void injection(double *gam, double *dgam, double *dN_dgam_dt, double *dgam_dt, double Lpsr, double dt, double *N_inj_tot, double epse, double gam_b, double gam_max, double p1, double p2, int Nbin_e)
 {
-  int i;
-  double tmp = 0.;
+  int i,j;  
+  double tmp=0.0,total_frac_depo=0.0,frac_resi=0.0,frac_depo=0.0;
+  double dN_dgam_dt_eff[Nbin_e];
+ 
   for (i=0;i<Nbin_e;i++){
     dN_dgam_dt[i] = dN_dgam_dt_inj(gam[i],Lpsr,epse,gam_b,gam_max,p1,p2);
+    dN_dgam_dt_eff[i] = 0.0;
     tmp += dN_dgam_dt[i]*dt*dgam[i];
   }
   tmp -= 0.5*(dN_dgam_dt[0]*dt*dgam[0]+dN_dgam_dt[Nbin_e-1]*dt*dgam[Nbin_e-1]);
   *N_inj_tot += tmp;
+
+  for (i=Nbin_e-1;i>0;i--){
+    total_frac_depo = 0.0;
+    frac_resi = 1.0;
+    frac_depo = 0.0;
+    for (j=i;j>0;j--){
+      frac_depo = frac_resi/(1.0+dt/dgam[i]*dgam_dt[i]);
+      dN_dgam_dt_eff[j] += frac_depo*dN_dgam_dt[i]*(dgam[i]/dgam[j]);
+      
+      total_frac_depo += frac_depo;
+      if(total_frac_depo > 1.0)
+	break;
+
+      frac_resi = (1.-total_frac_depo);
+    }
+    dN_dgam_dt_eff[0] += frac_resi*dN_dgam_dt[i]*(dgam[i]/dgam[0]);
+  }
+  dN_dgam_dt_eff[0] += dN_dgam_dt[0];
+
+  for (i=0;i<Nbin_e;i++){
+    dN_dgam_dt[i] = dN_dgam_dt_eff[i];
+  }
+  
 }
 
 double dgam_dt_ad(double gam, double t)
@@ -253,25 +265,28 @@ void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, doub
   }
 }
 
+
+/* Under construction */
 void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, int Nbin_e)
 {
   int i;
   double dN_dgam_old[Nbin_e];
+  double N_cool = 0.0;
+  double dN_dgam_cool = 0.0;
 
   for (i=0;i<Nbin_e;i++){
     dN_dgam_old[i] = dN_dgam[i];
   }
 
-  dN_dgam[Nbin_e-1] = (dN_dgam_old[Nbin_e-1]+dN_dgam_dt[Nbin_e-1]*dt)/(1.0+dt/dgam[Nbin_e-1]*dgam_dt[Nbin_e-1]);
+  dN_dgam[Nbin_e-1] = (dN_dgam_old[Nbin_e-1])/(1.0+dt/dgam[Nbin_e-1]*dgam_dt[Nbin_e-1]) + dN_dgam_dt[Nbin_e-1]*dt;
   for(i=Nbin_e-2;i>0;i--){
-    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam_dt[i]*dt+dN_dgam_old[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i])
-      + dN_dgam_dt[i+1]*dgam_dt[i+1]*dt*dt/gam[i+1]/(1.0+dt/dgam[i+1]*dgam_dt[i+1]);
-  }  
-  dN_dgam[0] = dN_dgam_old[0]+dN_dgam_dt[0]*dt+(dN_dgam_old[1]*dt/dgam[0]*dgam_dt[1])/(1.0+dt/dgam[0]*dgam_dt[0])
-    + dN_dgam_dt[1]*dgam_dt[1]*dt*dt/gam[1]/(1.0+dt/dgam[1]*dgam_dt[1]);
+    dN_dgam[i] = (dN_dgam_old[i]+dN_dgam[i+1]*dt/dgam[i]*dgam_dt[i+1])/(1.0+dt/dgam[i]*dgam_dt[i]) + dN_dgam_dt[i]*dt;
 
-  /* To-Do?  */
-  /* the 2nd term in the dN_dgam[i] calculation corresponds to the fast cooling electron flux, which may need to be refined */
+  }    
+  dN_dgam[0] = dN_dgam_old[0] + dN_dgam_dt[1]*dt/dgam[0]*dgam_dt[1] + dN_dgam_dt[0]*dt;
+
+  /* To-Do */
+  /* the 2nd term in the dN_dgam[i] calculation corresponds to the injection term, which may need to be refined */
 }
 
 
