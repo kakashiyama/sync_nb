@@ -265,8 +265,6 @@ void cooling(double t, double B, double *dgam_dt, double *gam, double *tad, doub
   }
 }
 
-
-/* Under construction */
 void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, double *dN_dgam_dt, double *dgam_dt, int Nbin_e)
 {
   int i;
@@ -284,11 +282,7 @@ void time_evolution_e(double dt, double *gam, double *dgam, double *dN_dgam, dou
 
   }    
   dN_dgam[0] = dN_dgam_old[0] + dN_dgam_dt[1]*dt/dgam[0]*dgam_dt[1] + dN_dgam_dt[0]*dt;
-
-  /* To-Do */
-  /* the 2nd term in the dN_dgam[i] calculation corresponds to the injection term, which may need to be refined */
 }
-
 
 double syn_func_fit(double x)
 {
