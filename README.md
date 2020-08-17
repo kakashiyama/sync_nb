@@ -8,8 +8,6 @@ An implicit solver for synchrotron nebula emission. The code calculates the time
 ---
 ## calculating nebula spectra
 
-`$ chmod u+x run`
-
 `$ ./run`
 
 ---
